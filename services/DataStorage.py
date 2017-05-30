@@ -11,13 +11,13 @@ class DataStorage(object):
             stamp = int(datetime.now().timestamp() * 1000)
             dest_name = file_path + "." + str(stamp) + ".bak.txt"
             copyfile(file_path, dest_name)
-        self.__file = open(file_path, mode="r+")
-        self.data = [json.loads(x.strip()) for x in self.__file.readlines()]
+        self._file = open(file_path, mode="r+")
+        self.data = [json.loads(x.strip()) for x in self._file.readlines()]
 
     def write(self, data):
         self.data.append(data)
-        self.__file.write("\n" + json.dumps(data))
+        self._file.write("\n" + json.dumps(data))
 
     def dispose(self):
-        self.__file.close()
+        self._file.close()
 

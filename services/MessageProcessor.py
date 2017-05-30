@@ -13,7 +13,7 @@ KEYTAG = "#расходы"
 
 class MessageProcessor(object):
     def __init__(self, users):
-        self.__users = users
+        self._users = users
 
     def processable(self, entity):
         if not "text" in entity:
@@ -35,10 +35,10 @@ class MessageProcessor(object):
         subproducts = None
         price = None
         currency = "rub"
-        if not self.__users.authorized(user):
+        if not self._users.authorized(user):
             return None
 
-        tokens = self.__tokenize(entity["text"])
+        tokens = self._tokenize(entity["text"])
         if tokens:
             if tokens["products"][0]:
                 category = tokens["products"][0]
@@ -46,13 +46,13 @@ class MessageProcessor(object):
                 subproducts = tokens["products"][1:]
 
             if len(tokens["mentions"]) > 0:
-                if len(tokens["mentions"]) == 1 and self.__users.aliases[tokens["mentions"][0]]:
-                    user = self.__users.aliases[tokens["mentions"][0]]
+                if len(tokens["mentions"]) == 1 and self._users.aliases[tokens["mentions"][0]]:
+                    user = self._users.aliases[tokens["mentions"][0]]
                 else:
                     return None
 
             for data in tokens["data"]:
-                if self.__is_number(data):
+                if self._is_number(data):
                     if price:
                         return None
                     price = float(data)
@@ -82,7 +82,7 @@ class MessageProcessor(object):
         return None
 
     @staticmethod
-    def __tokenize(text):
+    def _tokenize(text):
         def categorize (lists, el):
             if el[0] == "#":
                 lists["products"].append(el[1:])
@@ -101,7 +101,7 @@ class MessageProcessor(object):
         return wordlist
 
     @staticmethod
-    def __is_number(s):
+    def _is_number(s):
         try:
             float(s)
             return True

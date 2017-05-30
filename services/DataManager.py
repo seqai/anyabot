@@ -1,23 +1,23 @@
 class DataManager(object):
     def __init__(self, storage, processor, users):
         self.data = []
-        self.__storage = storage
-        self.__processor = processor
-        self.__users = users
+        self._storage = storage
+        self._processor = processor
+        self._users = users
         for entity in storage.data:
             self.data.append(processor.process(entity))
 
 
     def add(self, entity):
-        result = self.__processor.process(entity) 
+        result = self._processor.process(entity) 
         if result:
             self.data.append(result)
-            self.__storage.write(entity)
+            self._storage.write(entity)
             return True
         return False
 
     def authorized(self, id):
-        return id in self.__processor.users
+        return id in self._processor.users
 
     def processable(self, entity):
-        return self.__processor.processable(entity)
+        return self._processor.processable(entity)

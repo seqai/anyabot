@@ -1,27 +1,35 @@
 from helpers.helpers import try_parse_date
 from datetime import datetime, timedelta
+from dateutil import relativedelta
+
+OFFSET_ALIASES = {"this":0, "last":1}
 
 class ReporterService(object):
     def __init__(self, manager, users):
-        self.__manager = manager
-        self.__users = users
+        self._manager = manager
+        self._users = users
 
     def report_simple(self):
-        data = self.__manager.data
+        data = self._manager.data
         result = []
-        for user in self.__users.users:
+        for user in self._users.users:
             psum = sum(map(lambda d: d["price"], filter(lambda d, u = user: d["user"] == u, data)))
-            result.append({ "name": self.__users.reportnames[user], "sum": psum })
+            result.append({ "name": self._users.reportnames[user], "sum": psum })
         return result
 
     def report(self, arguments):
         rtype = "who"
         total = False
         sort = False
-        data = self.__manager.data
+        data = self._manager.data
         result = []
         start_ts = None
         end_ts = None
+
+        if "period" in arguments:
+            start_ts, end_ts = self._genPeriod(arguments["period"])
+            start_ts = start_ts.timestamp()
+            end_ts = end_ts.timestamp()
 
         if "start" in arguments:
             start_ts = try_parse_date(arguments["start"][0])
@@ -52,9 +60,9 @@ class ReporterService(object):
                 psum = sum(map(lambda d: d["price"], filter(lambda d, c = cat: d["category"] == c, data)))
                 result.append({"name": cat, "sum": psum})
         else:
-            for user in self.__users.users:
+            for user in self._users.users:
                 psum = sum(map(lambda d: d["price"], filter(lambda d, u = user: d["user"] == u, data)))
-                result.append({"name": self.__users.reportnames[user], "sum": psum})
+                result.append({"name": self._users.reportnames[user], "sum": psum})
 
         if sort:
             result = sorted(result, key=lambda x: x["sum"])
@@ -65,11 +73,14 @@ class ReporterService(object):
 
     def report_series(self, arguments):
         rtype = "who"
-        data = self.__manager.data
+        data = self._manager.data
         result = []
         start_date = None
         end_date = None
         collapse = False
+
+        if "period" in arguments:
+            start_date, end_date = self._genPeriod(arguments["period"])
 
         if "start" in arguments:
             start_ts = try_parse_date(arguments["start"][0])
@@ -109,10 +120,39 @@ class ReporterService(object):
                     psum = sum(map(lambda d: d["price"], filter(lambda d, c = cat: d["category"] == c, subdata)))
                     subresult.append({"name": cat, "sum": psum})
             else:
-                for user in self.__users.users:
+                for user in self._users.users:
                     psum = sum(map(lambda d: d["price"], filter(lambda d, u = user: d["user"] == u, subdata)))
-                    subresult.append({"name": self.__users.reportnames[user], "sum": psum})
+                    subresult.append({"name": self._users.reportnames[user], "sum": psum})
             if not collapse or any(el["sum"] != 0 for el in subresult):
                 result.append({"date": subdate, "values": subresult})
 
         return result
+
+    def _genPeriod(self, arguments):
+        dt = datetime.today().replace(hour=0,minute=0,second=0,microsecond=0)
+        start = None
+        end = None
+        period = None
+        offset = 0
+        if len(arguments) > 0:
+            period = arguments[0].lower()
+        if len(arguments) > 1:
+            offset = arguments[1].lower()
+            if (offset in OFFSET_ALIASES):
+                offset = OFFSET_ALIASES[offset]
+            else:
+                try:
+                    offset = abs(int(offset))
+                except:
+                    offset = 0
+        if period == "year":
+            start = dt.replace(day=1, month=1) - relativedelta.relativedelta(years=offset) 
+            end = start + relativedelta.relativedelta(years=1)
+        elif period == "month":
+            start = dt.replace(day=1) - relativedelta.relativedelta(months=offset) 
+            end = start + relativedelta.relativedelta(months=1)
+        else:
+            start = dt - timedelta(days=dt.weekday()) - timedelta(days=7*offset) 
+            end = start + timedelta(days=7)
+            pass
+        return start, end
