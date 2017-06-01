@@ -27,7 +27,6 @@ REPORTER_SERVICE = ReporterService(DATA_MANAGER, USER_SERVICE)
 CHART_SERVICE = ChartService()
 BOT_SERVICE = BotService(TOKEN, DATA_MANAGER, USER_SERVICE, REPORTER_SERVICE, CHART_SERVICE)
 def dispose_handler():
-    DATA_STORAGE.dispose()
     print("Terminating...")
 
 atexit.register(dispose_handler)

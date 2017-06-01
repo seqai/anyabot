@@ -5,19 +5,17 @@ import json
 
 class DataStorage(object):
     def __init__(self, file_path):
+        self._file_path = file_path
         if not os.path.isfile(file_path):
             open(file_path, "w+").close()
         else:
             stamp = int(datetime.now().timestamp() * 1000)
             dest_name = file_path + "." + str(stamp) + ".bak.txt"
             copyfile(file_path, dest_name)
-        self._file = open(file_path, mode="r+")
-        self.data = [json.loads(x.strip()) for x in self._file.readlines()]
+        with open(file_path, mode="r") as file:
+            self.data = [json.loads(x.strip()) for x in file.readlines()]
 
     def write(self, data):
         self.data.append(data)
-        self._file.write("\n" + json.dumps(data))
-
-    def dispose(self):
-        self._file.close()
-
+        with open(self._file_path, mode="a") as file:
+            file.write("\n" + json.dumps(data))
